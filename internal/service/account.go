@@ -22,7 +22,7 @@ func NewAccountService(accountRepo repo.Account) *AccountService {
 func (s *AccountService) GetAccount(ctx context.Context, input AccountGetInput) (entity.Account, error) {
 	account, err := s.accountRepo.GetAccountByIdAndRefToken(ctx, input.UserId, input.RefreshToken)
 	if err != nil {
-		return entity.Account{}, fmt.Errorf("AccountService.RefreshTokens - s.userRepo.GetUserByUsername: %w", err)
+		return entity.Account{}, fmt.Errorf("AccountService.GetAccount - s.accountRepo.GetAccountByIdAndRefToken: %w", err)
 	}
 	if account.UserAgent != input.UserAgent {
 		return entity.Account{}, ErrDifferentUserAgent

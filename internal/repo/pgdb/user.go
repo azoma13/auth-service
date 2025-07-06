@@ -3,7 +3,6 @@ package pgdb
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/azoma13/auth-service/internal/entity"
 	"github.com/azoma13/auth-service/pkg/postgres"
@@ -35,7 +34,6 @@ func (r *UserRepo) CreateUser(ctx context.Context, user entity.User) (string, er
 }
 
 func (r *UserRepo) GetUserByUsername(ctx context.Context, username string) (entity.User, error) {
-
 	query := `
 			SELECT id, username, password, created_at
 				FROM users
@@ -56,7 +54,6 @@ func (r *UserRepo) GetUserByUsername(ctx context.Context, username string) (enti
 }
 
 func (r *UserRepo) GetUserByUsernameAndPassword(ctx context.Context, username, password string) (entity.User, error) {
-
 	query := `
 			SELECT id, username, password, created_at
 				FROM users
@@ -71,7 +68,6 @@ func (r *UserRepo) GetUserByUsernameAndPassword(ctx context.Context, username, p
 	)
 
 	if err != nil {
-		log.Println(err)
 		return entity.User{}, fmt.Errorf("UserRepo.GetUserByUsernameAndPassword - r.Pool.QueryRow: %v", err)
 	}
 

@@ -22,7 +22,6 @@ func (r *AccountRepo) CreateAccount(ctx context.Context, account entity.Account)
 			(user_id, refresh_token, user_agent, x_forwarded_for)
 		VALUES ($1, crypt($2, gen_salt('bf', 10)), $3, $4)
 	`
-
 	_, err := r.Pool.Exec(ctx, exec, account.UserId, account.RefreshToken, account.UserAgent, account.XForwardedFor)
 	if err != nil {
 		return fmt.Errorf("AccountRepo.CreateAccount - r.Pool.Exec: %w", err)
@@ -45,7 +44,6 @@ func (r *AccountRepo) DeleteAccount(ctx context.Context, userId, refreshToken st
 }
 
 func (r *AccountRepo) GetAccountByIdAndRefToken(ctx context.Context, userId, refreshToken string) (entity.Account, error) {
-
 	query := `
 			SELECT id, user_id, refresh_token, user_agent, x_forwarded_for, created_at
 				FROM accounts
@@ -62,7 +60,7 @@ func (r *AccountRepo) GetAccountByIdAndRefToken(ctx context.Context, userId, ref
 	)
 
 	if err != nil {
-		return entity.Account{}, fmt.Errorf("UserRepo.GetUserByUsernameAndPassword - r.Pool.QueryRow: %v", err)
+		return entity.Account{}, fmt.Errorf("AccountRepo.GetAccountByIdAndRefToken - r.Pool.QueryRow: %v", err)
 	}
 
 	return account, nil

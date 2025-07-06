@@ -14,12 +14,14 @@ type AuthCreateUserInput struct {
 }
 
 type AuthGenerateTokenInput struct {
+	Id          string
 	Username    string
 	Password    string
 	TokenClaims TokenClaims
 }
 
 type AuthCreateAccountInput struct {
+	UserId        string
 	Username      string
 	RefreshToken  string
 	UserAgent     string

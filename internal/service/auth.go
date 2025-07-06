@@ -45,33 +45,42 @@ func (s *AuthService) CreateUser(ctx context.Context, input AuthCreateUserInput)
 }
 
 func (s *AuthService) CreateAccount(ctx context.Context, input AuthCreateAccountInput) error {
-	user, err := s.userRepo.GetUserByUsername(ctx, input.Username)
-	if err != nil {
-		return fmt.Errorf("AuthService.CreateAccount - s.userRepo.GetUserByUsername: %w", err)
-	}
-
 	account := &entity.Account{
-		UserId:        user.Id,
 		RefreshToken:  input.RefreshToken,
 		UserAgent:     input.UserAgent,
 		XForwardedFor: input.XForwardedFor,
 	}
 
-	err = s.accountRepo.CreateAccount(ctx, *account)
+	src := ctx.Value("source").(string)
+	if src == "logInWithId" {
+		account.UserId = input.UserId
+	} else {
+		user, err := s.userRepo.GetUserByUsername(ctx, input.Username)
+		if err != nil {
+			return fmt.Errorf("AuthService.CreateAccount - s.userRepo.GetUserByUsername: %w", err)
+		}
+
+		account.UserId = user.Id
+	}
+
+	err := s.accountRepo.CreateAccount(ctx, *account)
 	if err != nil {
 		return fmt.Errorf("AuthService.CreateAccount - s.accountRepo.CreateAccount: %w", err)
 	}
-
 	return nil
 }
 
 func (s *AuthService) GenerateToken(ctx context.Context, input AuthGenerateTokenInput) (string, error) {
-	user, err := s.userRepo.GetUserByUsernameAndPassword(ctx, input.Username, s.passwordHasher.Hash(input.Password))
-	if err != nil {
-		return "", fmt.Errorf("AuthService.GenerateToken: cannot get user: %v", err)
+	src := ctx.Value("source").(string)
+	if src == "logInWithId" {
+		input.TokenClaims.UserId = input.Id
+	} else {
+		user, err := s.userRepo.GetUserByUsernameAndPassword(ctx, input.Username, s.passwordHasher.Hash(input.Password))
+		if err != nil {
+			return "", fmt.Errorf("AuthService.GenerateToken: cannot get user: %v", err)
+		}
+		input.TokenClaims.UserId = user.Id
 	}
-
-	input.TokenClaims.UserId = user.Id
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, input.TokenClaims)
 

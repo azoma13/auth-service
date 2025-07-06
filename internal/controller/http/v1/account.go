@@ -31,6 +31,7 @@ func newAccountRoutes(g *echo.Group, accountService service.Account) {
 func (r *accountRoutes) getGuid(c echo.Context) error {
 	id, err := getId(c)
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusBadRequest, "invalid get userid")
 		return fmt.Errorf("invalid get userid")
 	}
@@ -47,18 +48,21 @@ func (r *accountRoutes) getGuid(c echo.Context) error {
 func (r *accountRoutes) updateTokens(c echo.Context) error {
 	id, err := getId(c)
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusBadRequest, "invalid get userid")
 		return fmt.Errorf("invalid get userid")
 	}
 
 	cookie, err := c.Cookie("refreshToken")
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusBadRequest, "invalid request body")
 		return err
 	}
 
 	oldRefreshToken, err := base64.StdEncoding.DecodeString(cookie.Value)
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
@@ -76,16 +80,17 @@ func (r *accountRoutes) updateTokens(c echo.Context) error {
 		err := r.signOut(c)
 		return err
 	case service.ErrDifferentXForwardedFor:
-		log.Println("sdf")
 		webhook()
 	case nil:
 	default:
+		log.Println(err)
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
 
 	accessToken, refreshToken, err := r.newTokens(c, account)
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
@@ -95,7 +100,9 @@ func (r *accountRoutes) updateTokens(c echo.Context) error {
 		RefreshToken:  refreshToken,
 		XForwardedFor: c.Request().Header.Get("X-Forwarded-For"),
 	})
+
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
@@ -137,6 +144,7 @@ func (r *accountRoutes) newTokens(c echo.Context, account entity.Account) (strin
 		UserId:         account.UserId,
 	})
 	if err != nil {
+		log.Println(err)
 		return "", "", err
 	}
 
@@ -145,6 +153,7 @@ func (r *accountRoutes) newTokens(c echo.Context, account entity.Account) (strin
 		UserId:         account.UserId,
 	})
 	if err != nil {
+		log.Println(err)
 		return "", "", err
 	}
 
@@ -158,26 +167,29 @@ func webhook() {
 func (r *accountRoutes) signOut(c echo.Context) error {
 	cookie, err := c.Cookie("refreshToken")
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusBadRequest, "invalid request body")
 		return err
 	}
 
 	refreshToken, err := base64.StdEncoding.DecodeString(cookie.Value)
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
 
 	userId := c.Get(userIdCtx)
 	if userId == nil {
+		log.Println("userId is nil")
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return err
+		return fmt.Errorf("userId is nil")
 	}
 
 	id, ok := userId.(string)
 	if !ok {
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return err
+		return fmt.Errorf("error convert userId to string")
 	}
 
 	err = r.accountService.DeleteAccount(c.Request().Context(), service.AuthDeleteAccountInput{
@@ -185,6 +197,7 @@ func (r *accountRoutes) signOut(c echo.Context) error {
 		RefreshToken: string(refreshToken),
 	})
 	if err != nil {
+		log.Println(err)
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
