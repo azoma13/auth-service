@@ -4,9 +4,9 @@
 Сервис, который реализует часть функционала простейшей аутентификации. 
 
 ## Стек:
-Язык сервиса: Go;
-База данных: PostgreSQL;
-Деплоя зависимостей и самого сервиса: Docker, Docker-Compose.
+    Язык сервиса: Go;
+    База данных: PostgreSQL;
+    Деплоя зависимостей и самого сервиса: Docker, Docker-Compose.
 
 ## Сервис предоставляет следующие конечные точки API:
 - регистрация пользователя;
@@ -50,6 +50,7 @@ curl --location --request POST 'http://localhost:8080/auth/log-in?id=730846ae-b3
 --header 'X-Forwarded-For: 123.132.223.0'
 ```
 Ответ: `204 No Content`
+
 Запрос для пользователя с username и password:
 ```
 curl --location 'http://localhost:8080/auth/sign-in' \
@@ -70,6 +71,7 @@ curl --location --request PUT 'http://localhost:8080/api/v1/accounts/refresh' \
 --header 'Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTE4NDI3NTIsImlhdCI6MTc1MTg0MDk1Miwic3ViIjoiYWNjZXNzX3Rva2VuIiwiVXNlcklkIjoiNzM0Yzk2YzgtMmJkNi00YzJmLWEzMDktMjM5NDNiMzJhZTRjIn0.vOag3CYkcRoefPPU5AjtMNFZZhK56Oxm1mOwreBM7K4; refreshToken=ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFM05URTRORFk1TlRJc0ltbGhkQ0k2TVRjMU1UZzBNRGsxTWl3aWMzVmlJam9pY21WbWNtVnphRjkwYjJ0bGJpSXNJbFZ6WlhKSlpDSTZJamN6TkdNNU5tTTRMVEppWkRZdE5HTXlaaTFoTXpBNUxUSXpPVFF6WWpNeVlXVTBZeUo5LjYzN21BMlRCNW1LeXVzaVB0VmtBdTJITUdvbVdBVGRuQ1c5VE9LeGU0N1k='
 ```
 Ответ: `204 No Content`
+
 Запрос при изменении User-Agent:
 ```
 curl --location --request PUT 'http://localhost:8080/api/v1/accounts/refresh' \
@@ -83,6 +85,7 @@ curl --location --request PUT 'http://localhost:8080/api/v1/accounts/refresh' \
     "message": "please sign-in again"
 }
 ```
+
 Запрос при изменении IP:
 ```
 curl --location --request PUT 'http://localhost:8080/api/v1/accounts/refresh' \
