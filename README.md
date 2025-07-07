@@ -18,6 +18,11 @@
 - на деавторизацию пользователя.
 Все роуты помимо регистрации и аутентификация защищены и недоступны без аутентификация в сервисе.
 
+## Инструкция по запуску проекта через Docker
+1. Описать файл `.env` согласно примеру `.env.example`
+2. Сервис собирается и запускается командой:
+`docker-compose -f docker-compose.yml up -d`
+
 ## Примеры
 Примеры возможных запросов:
 - [Регистрация](#sign-up)
@@ -115,8 +120,4 @@ curl --location --request DELETE 'http://localhost:8080/api/v1/accounts/sign-out
 --header 'Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTE4OTY2NzIsImlhdCI6MTc1MTg5NDg3Miwic3ViIjoiYWNjZXNzX3Rva2VuIiwiVXNlcklkIjoiNzMwODQ2YWUtYjM1Ni00MjgxLThmNmMtMmViNzc4M2M5MTIwIn0.r3NViEjwAeTpBUaUFbemC6iMfNc5hhWEOXEYg4_eX7g; refreshToken=ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFM05URTVNREE0TnpJc0ltbGhkQ0k2TVRjMU1UZzVORGczTWl3aWMzVmlJam9pY21WbWNtVnphRjkwYjJ0bGJpSXNJbFZ6WlhKSlpDSTZJamN6TURnME5tRmxMV0l6TlRZdE5ESTRNUzA0WmpaakxUSmxZamMzT0ROak9URXlNQ0o5LmNqWmdrTWRHdGI4dWZ5WW1YT0NuaFhpTEdWdVliMHRpU1JGWUZvZ2FKdjQ='
 ```
 Ответ: `204 No Content`
-
-## Инструкция по запуску проекта через Docker
-1. Сервис собирается и запускается командой:
-`docker-compose -f docker-compose.yml up -d`
 
