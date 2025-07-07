@@ -1,0 +1,191 @@
+basePath: /
+definitions:
+  echo.HTTPError:
+    properties:
+      message: {}
+    type: object
+  internal_controller_http_v1.accountRoutes:
+    type: object
+  internal_controller_http_v1.authRoutes:
+    type: object
+  internal_controller_http_v1.signInput:
+    properties:
+      id:
+        type: string
+      password:
+        type: string
+      username:
+        maxLength: 32
+        minLength: 4
+        type: string
+    required:
+    - password
+    - username
+    type: object
+host: localhost:8089
+info:
+  contact:
+    email: '@azoma13'
+    name: azoma13
+  description: This is a service for auth.
+  title: Auth Service
+  version: "1.0"
+paths:
+  /api/v1/accounts/guid:
+    get:
+      consumes:
+      - application/json
+      description: Get guid
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_controller_http_v1.accountRoutes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      security:
+      - JWT: []
+      summary: Get guid
+      tags:
+      - accounts
+  /api/v1/accounts/refresh:
+    put:
+      consumes:
+      - application/json
+      description: Update tokens
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      security:
+      - JWT: []
+      summary: Update tokens
+      tags:
+      - accounts
+  /auth/log-in:
+    post:
+      consumes:
+      - application/json
+      description: Log in
+      parameters:
+      - description: input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller_http_v1.signInput'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Log in
+      tags:
+      - auth
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Sign in
+      parameters:
+      - description: input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller_http_v1.signInput'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Sign in
+      tags:
+      - auth
+  /auth/sign-out:
+    delete:
+      consumes:
+      - application/json
+      description: Sign out
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Sign out
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Sign up
+      parameters:
+      - description: input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controller_http_v1.signInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_controller_http_v1.authRoutes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Sign up
+      tags:
+      - auth
+securityDefinitions:
+  JWT:
+    description: JWT token
+    in: cookie
+    name: access_token
+    type: apiKey
+swagger: "2.0"

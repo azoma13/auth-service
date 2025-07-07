@@ -18,6 +18,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// @title           Auth Service
+// @version         1.0
+// @description     This is a service for auth.
+
+// @contact.name   azoma13
+// @contact.email  @azoma13
+
+// @host      localhost:8089
+// @BasePath  /
+
+// @securityDefinitions.apikey  JWT
+// @in                          cookie
+// @name                        access_token
+// @description					JWT token
+
 func Run() {
 	err := config.NewConfig()
 	if err != nil {

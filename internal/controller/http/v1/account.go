@@ -28,6 +28,15 @@ func newAccountRoutes(g *echo.Group, accountService service.Account) {
 	g.DELETE("/sign-out", r.signOut)
 }
 
+// @Summary Get guid
+// @Description Get guid
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Success 200 {object} v1.accountRoutes.getGuid.response
+// @Failure 400 {object} echo.HTTPError
+// @Security JWT
+// @Router /api/v1/accounts/guid [get]
 func (r *accountRoutes) getGuid(c echo.Context) error {
 	id, err := getId(c)
 	if err != nil {
@@ -45,6 +54,16 @@ func (r *accountRoutes) getGuid(c echo.Context) error {
 	})
 }
 
+// @Summary Update tokens
+// @Description Update tokens
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Success 204
+// @Failure 400 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Security JWT
+// @Router /api/v1/accounts/refresh [put]
 func (r *accountRoutes) updateTokens(c echo.Context) error {
 	id, err := getId(c)
 	if err != nil {
@@ -112,6 +131,64 @@ func (r *accountRoutes) updateTokens(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, nil)
 }
 
+// @Summary Sign out
+// @Description Sign out
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 204
+// @Failure 400 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /auth/sign-out [delete]
+func (r *accountRoutes) signOut(c echo.Context) error {
+	cookie, err := c.Cookie("refreshToken")
+	if err != nil {
+		log.Println(err)
+		newErrorResponse(c, http.StatusBadRequest, "invalid request body")
+		return err
+	}
+
+	refreshToken, err := base64.StdEncoding.DecodeString(cookie.Value)
+	if err != nil {
+		log.Println(err)
+		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return err
+	}
+
+	userId := c.Get(userIdCtx)
+	if userId == nil {
+		log.Println("userId is nil")
+		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return fmt.Errorf("userId is nil")
+	}
+
+	id, ok := userId.(string)
+	if !ok {
+		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return fmt.Errorf("error convert userId to string")
+	}
+
+	err = r.accountService.DeleteAccount(c.Request().Context(), service.AuthDeleteAccountInput{
+		UserId:       id,
+		RefreshToken: string(refreshToken),
+	})
+	if err != nil {
+		log.Println(err)
+		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return err
+	}
+
+	setCookie(c, "accessToken", "", 0, -1)
+	setCookie(c, "refreshToken", "", config.Cfg.RefreshTokenTTL, -1)
+
+	source := c.Get("source")
+	if source == service.ErrDifferentUserAgent {
+		newErrorResponse(c, http.StatusForbidden, "please sign-in again")
+		return service.ErrDifferentUserAgent
+	}
+	return c.JSON(http.StatusNoContent, nil)
+}
+
 func getId(c echo.Context) (string, error) {
 	userId := c.Get(userIdCtx)
 	if userId == nil {
@@ -162,53 +239,4 @@ func (r *accountRoutes) newTokens(c echo.Context, account entity.Account) (strin
 
 func webhook() {
 
-}
-
-func (r *accountRoutes) signOut(c echo.Context) error {
-	cookie, err := c.Cookie("refreshToken")
-	if err != nil {
-		log.Println(err)
-		newErrorResponse(c, http.StatusBadRequest, "invalid request body")
-		return err
-	}
-
-	refreshToken, err := base64.StdEncoding.DecodeString(cookie.Value)
-	if err != nil {
-		log.Println(err)
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return err
-	}
-
-	userId := c.Get(userIdCtx)
-	if userId == nil {
-		log.Println("userId is nil")
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return fmt.Errorf("userId is nil")
-	}
-
-	id, ok := userId.(string)
-	if !ok {
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return fmt.Errorf("error convert userId to string")
-	}
-
-	err = r.accountService.DeleteAccount(c.Request().Context(), service.AuthDeleteAccountInput{
-		UserId:       id,
-		RefreshToken: string(refreshToken),
-	})
-	if err != nil {
-		log.Println(err)
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return err
-	}
-
-	setCookie(c, "accessToken", "", 0, -1)
-	setCookie(c, "refreshToken", "", config.Cfg.RefreshTokenTTL, -1)
-
-	source := c.Get("source")
-	if source == service.ErrDifferentUserAgent {
-		newErrorResponse(c, http.StatusForbidden, "please sign-in again")
-		return service.ErrDifferentUserAgent
-	}
-	return c.JSON(http.StatusNoContent, nil)
 }

@@ -35,6 +35,16 @@ type signInput struct {
 	Password string `json:"password" validate:"required,password"`
 }
 
+// @Summary Sign up
+// @Description Sign up
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body signInput true "input"
+// @Success 201 {object} v1.authRoutes.signUp.response
+// @Failure 400 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /auth/sign-up [post]
 func (r *authRoutes) signUp(c echo.Context) error {
 	var input signInput
 
@@ -69,6 +79,16 @@ func (r *authRoutes) signUp(c echo.Context) error {
 	})
 }
 
+// @Summary Sign in
+// @Description Sign in
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body signInput true "input"
+// @Success 204
+// @Failure 400 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /auth/sign-in [post]
 func (r *authRoutes) signIn(c echo.Context) error {
 	var input signInput
 
@@ -108,6 +128,61 @@ func (r *authRoutes) signIn(c echo.Context) error {
 	err = createAccount(c, r.authService, input.Username, refreshToken)
 	if err != nil {
 		log.Println(err)
+		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return err
+	}
+
+	setCookie(c, "accessToken", accessToken, config.Cfg.AccessTokenTTL, 0)
+	setCookie(c, "refreshToken", base64.StdEncoding.EncodeToString([]byte(refreshToken)), config.Cfg.RefreshTokenTTL, 0)
+
+	return c.JSON(http.StatusNoContent, nil)
+}
+
+// @Summary Log in
+// @Description Log in
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body signInput true "input"
+// @Success 204
+// @Failure 400 {object} echo.HTTPError
+// @Failure 500 {object} echo.HTTPError
+// @Router /auth/log-in [post]
+func (r *authRoutes) logIn(c echo.Context) error {
+	id := c.Request().URL.Query().Get("id")
+	if id == "" {
+		newErrorResponse(c, http.StatusBadRequest, "invalid request body")
+	}
+	var input signInput
+	input.Id = id
+
+	claimsAccess := jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(config.Cfg.AccessTokenTTL).Unix(),
+		IssuedAt:  time.Now().Unix(),
+		Subject:   "access_token",
+	}
+
+	claimsRefresh := jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(config.Cfg.RefreshTokenTTL).Unix(),
+		IssuedAt:  time.Now().Unix(),
+		Subject:   "refresh_token",
+	}
+
+	ctx := context.WithValue(c.Request().Context(), "source", source)
+	c.SetRequest(c.Request().WithContext(ctx))
+	accessToken, refreshToken, err := getAccessAndRefreshToken(ctx, r.authService, input, claimsAccess, claimsRefresh)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return err
+	}
+
+	err = r.authService.CreateAccount(c.Request().Context(), service.AuthCreateAccountInput{
+		UserId:        id,
+		RefreshToken:  refreshToken,
+		UserAgent:     c.Request().Header.Get("User-Agent"),
+		XForwardedFor: c.Request().Header.Get("X-Forwarded-For"),
+	})
+	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return err
 	}
@@ -194,49 +269,4 @@ func createAccount(c echo.Context, authService service.Auth, username, refreshTo
 	}
 
 	return nil
-}
-
-func (r *authRoutes) logIn(c echo.Context) error {
-	id := c.Request().URL.Query().Get("id")
-	if id == "" {
-		newErrorResponse(c, http.StatusBadRequest, "invalid request body")
-	}
-	var input signInput
-	input.Id = id
-
-	claimsAccess := jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(config.Cfg.AccessTokenTTL).Unix(),
-		IssuedAt:  time.Now().Unix(),
-		Subject:   "access_token",
-	}
-
-	claimsRefresh := jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(config.Cfg.RefreshTokenTTL).Unix(),
-		IssuedAt:  time.Now().Unix(),
-		Subject:   "refresh_token",
-	}
-
-	ctx := context.WithValue(c.Request().Context(), "source", source)
-	c.SetRequest(c.Request().WithContext(ctx))
-	accessToken, refreshToken, err := getAccessAndRefreshToken(ctx, r.authService, input, claimsAccess, claimsRefresh)
-	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return err
-	}
-
-	err = r.authService.CreateAccount(c.Request().Context(), service.AuthCreateAccountInput{
-		UserId:        id,
-		RefreshToken:  refreshToken,
-		UserAgent:     c.Request().Header.Get("User-Agent"),
-		XForwardedFor: c.Request().Header.Get("X-Forwarded-For"),
-	})
-	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return err
-	}
-
-	setCookie(c, "accessToken", accessToken, config.Cfg.AccessTokenTTL, 0)
-	setCookie(c, "refreshToken", base64.StdEncoding.EncodeToString([]byte(refreshToken)), config.Cfg.RefreshTokenTTL, 0)
-
-	return c.JSON(http.StatusNoContent, nil)
 }
